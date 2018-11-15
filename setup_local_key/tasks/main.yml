@@ -1,0 +1,27 @@
+---
+# tasks file for setup_local_key
+- name: "Ensure local .ssh folder exists"
+  local_action:
+                module: file
+                path: "{{ ansible_user_dir }}/.ssh"
+                owner: "{{ ansible_real_user_id }}"
+                group: "{{ ansible_real_group_id }}"
+                state: directory
+                mode: 0700
+                recurse: no
+  become: yes
+
+- name: "Install private key to local system"
+  local_action:
+                module: copy
+                src: "{{ ssh_user }}.key"
+                dest: "{{ ansible_user_dir }}/.ssh/{{ ssh_user }}.key"
+                mode: 0600
+                owner: "{{ ansible_real_user_id }}"
+                group: "{{ ansible_real_group_id }}"
+  become: yes
+
+- name: "Add to authorized keys file"
+  shell: "ssh-add {{ ansible_user_dir }}/.ssh/{{ ssh_user }}.key"
+  delegate_to: localhost
+  become: yes

@@ -1,0 +1,94 @@
+---
+#- name: install persistent iptables
+#  shell: apt-get install iptables-persistent -y (did this manually as I got promopted for saving current rules - set yes/yes)
+#  become: yes
+
+- name: iptables ingress loopback rules for zwave-pi
+  iptables: chain=INPUT in_interface=lo jump=ACCEPT comment="Loopback ingress"
+  become: yes
+  notify:
+    - save iptables
+
+- name: log invalid packets
+  iptables:
+    chain: INPUT
+    ctstate: INVALID
+    jump: LOG
+    log_prefix: "DROP INVALID"
+  become: yes
+  notify:
+    - save iptables
+
+- name: drop invalid packets
+  iptables: chain=INPUT ctstate=INVALID jump=DROP
+  become: yes
+  notify:
+    - save iptables
+
+- name: iptables ingress for ESTABLISHED or RELATED sessions
+  iptables: chain=INPUT ctstate=ESTABLISHED,RELATED jump=ACCEPT comment="Current Session ingress"
+  become: yes
+  notify:
+    - save iptables
+
+- name: iptables ingress rules for zwave-pi
+  iptables:
+    action=insert chain=INPUT source={{item.source}} destination_port={{item.port}} ctstate=NEW protocol={{item.protocol}} comment={{item.comment}} jump=ACCEPT
+  become: yes
+  notify:
+    - save iptables
+  with_items:
+    - { source: '0.0.0.0/0', port: '50888', protocol: 'tcp', comment: 'Ingress SSH' }
+    - { source: '0.0.0.0/0', port: '8123', protocol: 'tcp', comment: 'Ingress Home Assisstant Web' }
+
+####### EGRESS ######
+- name: iptables egress for loopback
+  iptables: chain=OUTPUT out_interface=lo jump=ACCEPT comment="Loopback egress"
+  become: yes
+  notify:
+    - save iptables
+
+- name: iptables egress for ESTABLISHED or RELATED sessions
+  iptables: chain=OUTPUT ctstate=ESTABLISHED,RELATED jump=ACCEPT comment="Current Session egress"
+  become: yes
+  notify:
+    - save iptables
+
+- name: iptables egress rules for zwave-pi
+  iptables:
+    action=insert chain=OUTPUT destination={{item.destination}} destination_port={{item.port}} ctstate=NEW protocol={{item.protocol}} comment={{item.comment}} jump=ACCEPT
+  become: yes
+  notify:
+    - save iptables
+  with_items:
+    - { destination: '0.0.0.0/0', port: '53', protocol: 'udp', comment: 'Egress UDP DNS requests' }
+    - { destination: '0.0.0.0/0', port: '53', protocol: 'tcp', comment: 'Egress TCP DNS zone transfers' }
+    - { destination: '0.0.0.0/0', port: '80', protocol: 'tcp', comment: 'Egress HTTP' }
+    - { destination: '0.0.0.0/0', port: '443', protocol: 'tcp', comment: 'Egress HTTPS' }
+    - { destination: '0.0.0.0/0', port: '123', protocol: 'tcp', comment: 'Egress NTP-TCP' }
+    - { destination: '0.0.0.0/0', port: '123', protocol: 'udp', comment: 'Egress NTP-UDP' }
+    - { destination: '0.0.0.0/0', port: '67', protocol: 'udp', comment: 'Egress DHCP' }
+# Set the policy for the INPUT chain to DROP
+- name: set default input policy to drop
+  iptables:
+    chain: INPUT
+    policy: DROP
+  notify:
+    - save iptables
+  become: yes
+
+- name: set default output policy to drop
+  iptables:
+    chain: OUTPUT
+    policy: DROP
+  notify:
+    - save iptables
+  become: yes
+
+- name: set default forward policy to drop
+  iptables:
+    chain: FORWARD
+    policy: DROP
+  notify:
+    - save iptables
+  become: yes

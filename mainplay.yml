@@ -1,0 +1,10 @@
+---
+- hosts:
+    - pi3plus
+  roles:
+    - raspbian_os
+  vars:
+    ssh_user: pi
+    ansible_user: pi
+    ansible_port: 50888
+    ansible_ssh_common_args: '-o ControlMaster=auto -o ControlPersist=600s -o PreferredAuthentications=password'

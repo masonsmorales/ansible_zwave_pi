@@ -1,0 +1,45 @@
+---
+# tasks file for raspbian_os
+#- name: Install system-wide bash history configuration file
+#  copy:
+#    src: bash_history.sh
+#    dest: /etc/profile.d/bash_history.sh
+#    owner: root
+#    group: root
+#    mode: 0644
+#  become: yes
+# Putting this here for a 1-time run
+# https://www.home-assistant.io/docs/authentication/
+#- name: Harden default SSH daemon configuration
+#  lineinfile:
+#    path: "/etc/ssh/sshd_config"
+#    regexp: "^{{ item.key }}"
+#    line: "{{ item.key }} {{ item.value }}"
+#  become: yes
+#  loop:
+#    - { key: "Port", value: "50888" }
+#    - { key: "AllowUsers", value: "{{ ssh_user }}" }
+#    - { key: "Protocol", value: "2" }
+#    - { key: "PermitRootLogin", value: "no" }
+#    - { key: "ChallengeResponseAuthentication", value: "no" }
+#    - { key: "PasswordAuthentication", value: "no" }
+#    - { key: "UsePAM", value: "no" }
+#  notify: restart ssh
+- name: Run the equivalent of apt-get update
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: Upgrade all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+  become: yes
+
+- name: Update all packages to the latest version
+  apt:
+    upgrade: dist
+  become: yes
+
+- name: Include iptables configs
+  include_tasks: iptables.yml

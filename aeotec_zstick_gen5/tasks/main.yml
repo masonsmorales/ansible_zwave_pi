@@ -1,0 +1,21 @@
+---
+# tasks file for aeotec_zstick_gen5
+# https://www.home-assistant.io/docs/z-wave/device-specific/
+- name: disable on-board bluetooth
+  lineinfile:
+    path: "/boot/config.txt"
+    regexp: '^dtoverlay=pi3-disable-bt'
+    line: 'dtoverlay=pi3-disable-bt'
+  become: yes
+
+- name: disable bluetooth modem service
+  service:
+    name: hciuart
+    enabled: no
+  become: yes
+
+- name: stop bluetooth modem service
+  service:
+    name: hciuart
+    state: stopped
+  become: yes

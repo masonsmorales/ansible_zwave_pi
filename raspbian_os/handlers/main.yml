@@ -1,0 +1,11 @@
+---
+# handlers file for raspbian_os
+- name: restart ssh
+  service:
+    name: ssh
+    state: restarted
+  become: yes
+
+- name: save iptables
+  shell: netfilter-persistent save
+  become: yes

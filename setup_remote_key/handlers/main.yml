@@ -1,0 +1,7 @@
+---
+# handlers file for setup_key
+- name: restart ssh
+  service:
+    name: ssh
+    state: restarted
+  become: yes

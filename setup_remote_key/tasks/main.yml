@@ -1,0 +1,73 @@
+---
+# tasks file for setup_key
+#- name: "Ensure remote .ssh folder exists"
+#  local_action:
+#                module: file
+#                path: "{{ ansible_user_dir }}/.ssh"
+#                owner: "{{ ansible_real_user_id }}"
+#                group: "{{ ansible_real_group_id }}"
+#                state: directory
+#                mode: 700
+
+- name: "create new group {{ ssh_user }}"
+  group:
+         name: "{{ ssh_user }}"
+         state: present
+  become: yes
+
+- name: "create new user {{ ssh_user }}"
+  user:
+   name: "{{ ssh_user }}"
+   group: "{{ ssh_user }}"
+  become: yes
+
+- name: "Add {{ ssh_user }} to sudoers file"
+  lineinfile:
+         dest: "/etc/sudoers.d/{{ item }}"
+         state: present
+         regexp: "^{{ item }}"
+         line: "{{ item }} ALL=(ALL) NOPASSWD: ALL"
+         create: yes
+         owner: root
+         group: root
+         mode: 0440
+  with_items:
+    - "{{ ssh_user }}"
+  become: yes
+
+- name: "Install public authorized key file for {{ ssh_user }}"
+  authorized_key:
+    user: '{{ ssh_user }}'
+    key: "{{ item }}"
+    state: present
+    exclusive: True
+  with_file:
+    - "{{ ssh_user }}.pub"
+  no_log: True
+  become: yes
+  notify:
+    - restart ssh
+
+- name: Ensure SSH service will start at boot
+  service:
+    name: ssh
+    enabled: yes
+  become: yes
+
+- name: Harden default SSH daemon configuration
+  lineinfile:
+    path: "/etc/ssh/sshd_config"
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} {{ item.value }}"
+  become: yes
+  loop:
+    - { key: "Port", value: "50888" }
+    - { key: "AllowUsers", value: "{{ ssh_user }}" }
+    - { key: "Protocol", value: "2" }
+    - { key: "PermitRootLogin", value: "no" }
+    - { key: "ChallengeResponseAuthentication", value: "no" }
+    - { key: "PasswordAuthentication", value: "no" }
+    - { key: "UsePAM", value: "no" }
+  notify: restart ssh
+
+# sudo cp /etc/profile /home/mason/.bash_profile

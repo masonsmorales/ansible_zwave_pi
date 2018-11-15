@@ -1,0 +1,55 @@
+---
+- hosts:
+    - localhost
+  roles:
+    - setup_local_key
+  vars:
+    ssh_user: mason
+    ansible_user: mmorales
+    ansible_port: 22
+  vars_files:
+    - setup_local_key/vars/password.yml
+
+#- hosts:
+#    - pi3plus
+#  roles:
+#    - setup_remote_key
+#  vars:
+#    ssh_user: mason
+#    ansible_user: pi
+#    ansible_port: 22
+#  vars_files:
+#    - setup_remote_key/vars/password.yml
+#  ignore_errors: true
+#  any_errors_fatal: false
+# fails after port change
+
+- hosts:
+    - pi3plus
+  roles:
+    - raspbian_os
+  vars:
+    ssh_user: mason
+    ansible_user: mason
+    ansible_port: 50888
+    ansible_ssh_private_key_file: ~/.ssh/mason.key
+    ansible_ssh_common_args: '-o ControlMaster=auto -o ControlPersist=600s -o PreferredAuthentications=publickey'
+# ansible_ssh_common_args='-o ControlMaster=auto -o ControlPersist=600s -o PreferredAuthentications=password,keyboard-interactive,publickey'
+#- hosts:
+#    - pi3plus
+#  roles:
+#    - raspbian_os
+#    - aeotec_zstick_gen5
+#  serial: 50
+#  vars:
+#    ssh_user: mason
+#    ansible_user: pi
+#  ansible_ssh_private_key_file: ~/.ssh/mason.key
+
+#- hosts:
+#     - pi3plus
+#  roles:
+#    - aeotec_zstick_gen5
+#  serial: 50
+#  vars:
+#    ansible_user: mason

@@ -1,6 +1,6 @@
 # Ansible Z-Wave Pi
-Author: Mason Morales
-Date: September 15, 2018
+Author: Mason Morales\
+Date: September 15, 2018\
 All Ansibled configurations in this project are my own
 
 # Description
